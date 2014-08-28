@@ -7,6 +7,8 @@ const int ledPin = 13;
 //sys
 int incomingByte;
 int temp;
+float error_Y[5][2];
+int count = 0;
 
 //speed variables
 float user[4];   //user motor speed
@@ -1129,21 +1131,7 @@ void loop()
     }
   }
   
-  motor[1] = (P * kalAngleY) + (D * -(kalAngleY - kalAngleY_last)) + user[1];
-  motor[3] = (P * -kalAngleY) + (D * (kalAngleY - kalAngleY_last)) +  user[3];
   
-  //prevents motors from firing at incorrect times or powering off in flight
-  for(temp = 0; temp < 4; temp++)
-  {
-    if(motor[temp] > max_speed)
-    {
-      motor[temp] = max_speed;
-    }
-    else if(motor[temp] < min_speed)
-    {
-      motor[temp] = min_speed;
-    }
-  }
   
   if(millis() < 30000)
   {
@@ -1155,6 +1143,22 @@ void loop()
   //this gives the gyro some time to start up
   if(millis() > 30000)
   {
+    motor[1] = (P * kalAngleY) + (D * -(kalAngleY - kalAngleY_last)) + user[1];
+    motor[3] = (P * -kalAngleY) + (D * (kalAngleY - kalAngleY_last)) +  user[3];
+    
+    //prevents motors from firing at incorrect times or powering off in flight
+    for(temp = 0; temp < 4; temp++)
+    {
+      if(motor[temp] > max_speed)
+      {
+        motor[temp] = max_speed;
+      }
+      else if(motor[temp] < min_speed)
+      {
+        motor[temp] = min_speed;
+      }
+    }
+    
     Serial.print(int(round(motor[1])));
     Serial.print('\n');
     //analogWrite(8, motor[0]); //disabled for rig testing
@@ -1163,8 +1167,27 @@ void loop()
     analogWrite(11, int(round(motor[3])));
   }
   
+  error_Y[count][0] = kalAngleY;
+  if(count != 0)
+  {
+    error_Y[count][1] = millis() - error_Y[count - 1][1];
+  }
+  else
+  {
+    error_Y[count][1] = millis() - error_Y[4][1];
+  }
+  
   kalAngleY_last = kalAngleY;
   delay(5); //so not to swamp the serial port
+  
+  if(count > 5)
+  {
+    count = 0;
+  }
+  else
+  {
+    count++;
+  }
 }
 
 
