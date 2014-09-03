@@ -7,8 +7,9 @@ const int ledPin = 13;
 //sys
 int incomingByte;
 int temp;
-float error_Y[5][2];
-int count = 0;
+float error_Y[5];
+float error_X[5];
+int count;
 
 //speed variables
 float user[4];   //user motor speed
@@ -17,9 +18,9 @@ float min_speed; //used to set speed modes between settings
 float max_speed; //prevents random jumps or shut-offs
 
 //PID constants
-float P = 1;
+float P = 1;  // was 1
 float I = 0;
-float D = 0.5;
+float D = 0.5;  // was 0.5
 
 // MPU-6050 Accelerometer + Gyro + Arduino Uno
 // -----------------------------
@@ -959,11 +960,16 @@ void setup()
   {
     user[temp] = 0;
     motor[temp] = 0;
+    error_Y[temp] = 0;
+    error_X[temp] = 0;
   }
   
+  error_Y[4] = 0;
+  error_X[4] =
   //keep motors off...
   min_speed = 0;
   max_speed = 0;
+  count = 0;
 }
 
 
@@ -1143,8 +1149,12 @@ void loop()
   //this gives the gyro some time to start up
   if(millis() > 30000)
   {
-    motor[1] = (P * kalAngleY) + (D * -(kalAngleY - kalAngleY_last)) + user[1];
-    motor[3] = (P * -kalAngleY) + (D * (kalAngleY - kalAngleY_last)) +  user[3];
+    error_X[count] = kalAngleX - kalAngleX_last;
+    error_Y[count] = kalAngleY - kalAngleY_last;
+    motor[0] = (P * -kalAngleY) + (I * (error_X[0] + error_X[1] + error_X[2] + error_X[3] + error_X[4])) + (D * error_X[count]) + user[0];
+    //motor[1] = (P * kalAngleY) + (I * (error_Y[0] + error_Y[1] + error_Y[2] + error_Y[3] + error_Y[4])) + (D * -error_Y[count]) + user[1];
+    motor[2] = (P * kalAngleY) + (I * (error_X[0] + error_X[1] + error_X[2] + error_X[3] + error_X[4])) + (D * -error_X[count]) + user[2];
+    //motor[3] = (P * -kalAngleY) + (I * (error_Y[0] + error_Y[1] + error_Y[2] + error_Y[3] + error_Y[4])) + (D * error_Y[count]) + user[3];
     
     //prevents motors from firing at incorrect times or powering off in flight
     for(temp = 0; temp < 4; temp++)
@@ -1159,28 +1169,19 @@ void loop()
       }
     }
     
-    Serial.print(int(round(motor[1])));
+    Serial.print(int(round(motor[0])));
     Serial.print('\n');
-    //analogWrite(8, motor[0]); //disabled for rig testing
-    analogWrite(9, int(round(motor[1])));
-    //analogWrite(10, motor[2]); //disabled for rig testing
-    analogWrite(11, int(round(motor[3])));
-  }
-  
-  error_Y[count][0] = kalAngleY;
-  if(count != 0)
-  {
-    error_Y[count][1] = millis() - error_Y[count - 1][1];
-  }
-  else
-  {
-    error_Y[count][1] = millis() - error_Y[4][1];
+    analogWrite(8, int(round(motor[0]))); //disabled for rig testing
+    //analogWrite(9, int(round(motor[1])));
+    analogWrite(10, int(round(motor[2]))); //disabled for rig testing
+    //analogWrite(11, int(round(motor[3])));
   }
   
   kalAngleY_last = kalAngleY;
+  kalAngleX_last = kalAngleX;
   delay(5); //so not to swamp the serial port
   
-  if(count > 5)
+  if(count >= 4)
   {
     count = 0;
   }
