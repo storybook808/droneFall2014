@@ -1115,7 +1115,7 @@ void loop()
     {
       digitalWrite(ledPin, LOW);
     }
-    if(incomingByte == 'A')
+    if(incomingByte == 'A') //Arming Motors
     {
       user[0] = 100;
       user[1] = 100;
@@ -1124,7 +1124,7 @@ void loop()
       min_speed = 100;
       max_speed = 100;
     }
-    if(incomingByte == 'O')
+    if(incomingByte == 'O') //Motors turn on
     {
       user[0] = 180;
       user[1] = 180;
@@ -1133,7 +1133,7 @@ void loop()
       min_speed = 150;
       max_speed = 254;
     }
-    if(incomingByte == 'F')
+    if(incomingByte == 'F') //Motors turn off
     {
       user[0] = 0;
       user[1] = 0;
@@ -1142,13 +1142,28 @@ void loop()
       min_speed = 0;
       max_speed = 0;
     }
-    if(incomingByte == 'W')
+    if(incomingByte == 'W') //Motors spin up by 10
     {
      user[0]+=10; 
      user[1]+=10;
      user[2]+=10;
      user[3]+=10;
     }
+    if(incomingByte == 'S') //Motors spin down by 10
+    {
+     user[0]-=10; 
+     user[1]-=10;
+     user[2]-=10;
+     user[3]-=10;
+    }
+    /*if(incomingByte == 'D') //Auto spin down motors and then turn off
+    {
+      while(motor[0]>100) {  //while the motor speed is more than 100, keep spinning 
+      user[0]=motor[0] -10;  //down the motors by decrement of 10
+      user[1]=motor[1] -10;
+      user[2]=motor[2] -10;
+      user[3]=motor[3] -10; }
+    }*/
   }
   
   
