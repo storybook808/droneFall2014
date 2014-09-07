@@ -18,9 +18,16 @@ float min_speed; //used to set speed modes between settings
 float max_speed; //prevents random jumps or shut-offs
 
 //PID constants
-float P = 1;
-float I = 0;
-float D = 0.5;
+/* PID Calibration Notes
+1. All terms to ZERO
+2. Set P small enough to start some correction
+3. Increase D until oscillation starts. Reduce this value by 2-4
+4. Start P at 1% of D, increase till oscillation starts. Reduce this value by 2-4
+5. Start I at 1% of P, increase till oscillation starts. Reduce this value by 2-4
+*/
+float P = 0.0025;      //was 1, this is 1% of D
+float I = 0.01;  //this is 1% of P
+float D = 0.25; //was 0.5 but reduced by a factor of 2
 
 // MPU-6050 Accelerometer + Gyro + Arduino Uno
 // -----------------------------
