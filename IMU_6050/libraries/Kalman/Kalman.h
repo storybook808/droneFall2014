@@ -1,6 +1,3 @@
-#ifndef Kalman_h
-#define Kalman_h
-
 #include "Arduino.h"
 
 class Kalman
@@ -31,5 +28,3 @@ class Kalman
     double y; // Angle difference - 1x1 matrix
     double S; // Estimate error - 1x1 matrix
 };
-
-#endif

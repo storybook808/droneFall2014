@@ -1,6 +1,6 @@
 #include "Arduino.h"
 #include "Kalman.h"
-
+using namespace std;
 Kalman::Kalman() {
     /* We will set the varibles like so, these can also be tuned by the user */
     Q_angle = 0.001;
@@ -12,10 +12,10 @@ Kalman::Kalman() {
     P[0][1] = 0;
     P[1][0] = 0;
     P[1][1] = 0;
-};
+}
 
 // The angle should be in degrees and the rate should be in degrees per second and the delta time in seconds
-Kalman::float getAngle(float newAngle, float newRate, float dt) {
+float Kalman::getAngle(float newAngle, float newRate, float dt) {
     // KasBot V2  -  Kalman filter module - http://www.x-firm.com/?page_id=145
     // Modified by Kristian Lauszus
     // See my blog post for more information: http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it
@@ -56,15 +56,16 @@ Kalman::float getAngle(float newAngle, float newRate, float dt) {
     P[1][1] -= K[1] * P[0][1];
     
     return angle;
-};
-Kalman::void setAngle(double newAngle) { angle = newAngle; }; // Used to set angle, this should be set as the starting angle
-Kalman::double getRate() { return rate; }; // Return the unbiased rate
+}
+
+void Kalman::setAngle(double newAngle) { angle = newAngle; } // Used to set angle, this should be set as the starting angle
+double Kalman::getRate() { return rate; } // Return the unbiased rate
     
 /* These are used to tune the Kalman filter */
-Kalman::void setQangle(double newQ_angle) { Q_angle = newQ_angle; };
-Kalman::void setQbias(double newQ_bias) { Q_bias = newQ_bias; };
-Kalman::void setRmeasure(double newR_measure) { R_measure = newR_measure; };
+void Kalman::setQangle(double newQ_angle) { Q_angle = newQ_angle; }
+void Kalman::setQbias(double newQ_bias) { Q_bias = newQ_bias; }
+void Kalman::setRmeasure(double newR_measure) { R_measure = newR_measure; }
 
-Kalman::double getQangle() { return Q_angle; };
-Kalman::double getQbias() { return Q_bias; };
-Kalman::double getRmeasure() { return R_measure; };
+double Kalman::getQangle() { return Q_angle; }
+double Kalman::getQbias() { return Q_bias; }
+double Kalman::getRmeasure() { return R_measure; }
