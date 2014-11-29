@@ -6,19 +6,19 @@
 #include "IMU_6050.h"
 
 // Global definitions
-#define ROLL_PID_KP    0.250
-#define ROLL_PID_KI    0
-#define ROLL_PID_KD    0
+#define ROLL_PID_KP    0.0000250
+#define ROLL_PID_KI    0.000250
+#define ROLL_PID_KD    0.250
 #define ROLL_PID_MIN  -52.0
 #define ROLL_PID_MAX   52.0
 
-#define PITCH_PID_KP   0.250
-#define PITCH_PID_KI   0
-#define PITCH_PID_KD   0
+#define PITCH_PID_KP   0.0000250
+#define PITCH_PID_KI   0.000250
+#define PITCH_PID_KD   0.250
 #define PITCH_PID_MIN -52.0
 #define PITCH_PID_MAX  52.0
 
-#define YAW_PID_KP     0.680
+#define YAW_PID_KP     0 //0.680
 #define YAW_PID_KI     0
 #define YAW_PID_KD     0
 #define YAW_PID_MIN   -52.0
@@ -102,6 +102,20 @@ typedef union accel_t_gyro_union
   } value;
 };
 
+// Global constants
+const unsigned long TIMEOUT = 18700;
+//int rcpin1 = 7;
+//int rcpin2 = 8;
+int rcpin3 = 7;
+//int rcpin4 = 10;
+//int rcpin5 = 11;
+//int rcpin6 = 12;
+int const maxthrot = 255;
+int const minthrot = 0;
+int const nullthrot = 0;
+int const chan3min = 1755;
+int const chan3max = 879;
+
 // Global function prototypes
 void set_last_read_angle_data(unsigned long time, float x, float y, float z, float x_gyro, float y_gyro, float z_gyro, float kx, float ky, float kz);
 int read_gyro_accel_vals(uint8_t* accel_t_gyro_ptr);
@@ -117,6 +131,9 @@ inline float get_last_gyro_z_angle() {return last_gyro_z_angle;}
 inline float get_last_x_kalangle() {return last_x_kalangle;}
 inline float get_last_y_kalangle() {return last_y_kalangle;}
 inline float get_last_z_kalangle() {return last_z_kalangle;}
+
+unsigned int cutoff(int rawin,int minthrot,int maxthrot);
+unsigned int RCread(int pinin, int chanmin, int chanmax);
 
 /********
 * SETUP *
@@ -160,6 +177,7 @@ void setup()
   
   PIDangleX.resetI();
   PIDangleY.resetI();
+  pinMode(rcpin3, INPUT);  // 970 - 1330; U - D
 }
 
 /************
@@ -244,19 +262,19 @@ void loop()
     }
     if(incomingByte == 'A')
     {
-      throttle = 100;
+//      throttle = 100;
       min_speed = 100;
       max_speed = 100;
     }
     if(incomingByte == 'O')
     {
-      throttle = 202;
+//      throttle = 220;
       min_speed = 150;
       max_speed = 254;
     }
     if(incomingByte == 'F')
     {
-      throttle = 0;
+//      throttle = 0;
       min_speed = 0;
       max_speed = 0;
     }
@@ -283,10 +301,10 @@ void loop()
 //    Serial.print("PIDyaw_val: ");
 //    Serial.print(kalAngleZ);
 //    Serial.print('\n');
-    motor[1]=throttle+PIDroll_val+PIDpitch_val+PIDyaw_val; //11
-    motor[2]=throttle-PIDroll_val-PIDpitch_val-PIDyaw_val; //9
-    motor[0]=throttle+PIDroll_val-PIDpitch_val-PIDyaw_val; // 8
-    motor[3]=throttle-PIDroll_val+PIDpitch_val+PIDyaw_val; //10
+    motor[1]=RCread(rcpin3,chan3min,chan3max)+PIDroll_val-PIDpitch_val+PIDyaw_val; //11
+    motor[2]=RCread(rcpin3,chan3min,chan3max)-PIDroll_val+PIDpitch_val-PIDyaw_val; //9
+    motor[0]=RCread(rcpin3,chan3min,chan3max)+PIDroll_val-PIDpitch_val+PIDyaw_val; // 8
+    motor[3]=RCread(rcpin3,chan3min,chan3max)-PIDroll_val+PIDpitch_val+PIDyaw_val; //10
     
     //prevents motors from firing at incorrect times or powering off in flight
     for(temp = 0; temp < 4; temp++)
@@ -302,12 +320,12 @@ void loop()
     }
     
     Serial.print("Motor 11: ");
-    Serial.print(int(round(motor[3])));
+    Serial.print(int(round(motor[1])));
     Serial.print('\n');
     analogWrite(8 , int(round(motor[0])));
-//    analogWrite(9 , int(round(motor[2])));
+    analogWrite(9 , int(round(motor[2])));
     analogWrite(10, int(round(motor[3])));
-//    analogWrite(11, int(round(motor[1])));
+    analogWrite(11, int(round(motor[1])));
   }  
 }
 
@@ -494,4 +512,40 @@ void calibrate_sensors() {
   base_z_gyro = z_gyro;
   
   // Calibration finished
+}
+
+unsigned int cutoff(int rawin,int minthrot,int maxthrot)
+{
+  if(rawin < minthrot)
+  {
+    rawin = minthrot;
+  }
+  else if(rawin > maxthrot)
+  {
+    rawin = maxthrot;
+  }
+return rawin;
+}
+
+unsigned int RCread(int pinin, int chanmin, int chanmax)
+{
+  /*
+
+  */
+  unsigned int rawin = pulseIn(pinin, HIGH, TIMEOUT);
+  if (rawin != 0)
+  {
+    Serial.print(rawin);
+    Serial.print(":");
+    rawin = map(rawin, chanmin, chanmax, minthrot, maxthrot);
+    rawin = cutoff(rawin,minthrot,maxthrot);
+    Serial.print(rawin);
+    Serial.print(", ");
+  }
+  else
+  {
+    Serial.print("0:0, ");
+    rawin = nullthrot;
+  }
+  return rawin;
 }
