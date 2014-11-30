@@ -37,6 +37,10 @@
 #define ANGLEY_MAX     104.0
 
 // Global variables
+int event_armed = 0;
+int event1 = 0;
+int event2 = 0;
+int event3 = 0;
 const int ledPin = 13;
 int incomingByte;
 int temp;
@@ -110,11 +114,11 @@ int rcpin3 = 7;
 //int rcpin4 = 10;
 //int rcpin5 = 11;
 //int rcpin6 = 12;
-int const maxthrot = 255;
-int const minthrot = 0;
+int maxthrot = 255;
+int minthrot = 0;
 int const nullthrot = 0;
-int const chan3min = 1755;
-int const chan3max = 879;
+int const chan3min = 1992;
+int const chan3max = 1000;
 
 // Global function prototypes
 void set_last_read_angle_data(unsigned long time, float x, float y, float z, float x_gyro, float y_gyro, float z_gyro, float kx, float ky, float kz);
@@ -278,6 +282,7 @@ void loop()
       min_speed = 0;
       max_speed = 0;
     }
+    
   }
   
   //prevent motors from powering up for one minute from start up...
@@ -289,6 +294,35 @@ void loop()
   }
   else
   {
+    if(event_armed == 0)
+    {
+      if(RCread(rcpin3,chan3min,chan3max) < 5 || event1 == 1)
+      {
+        event1 = 1;
+        if(RCread(rcpin3,chan3min,chan3max) > 250 || event2 == 1)
+        {
+          event2 = 1;
+          if(RCread(rcpin3,chan3min,chan3max) < 5) event3 = 1;
+        }
+      }
+      if(event3 == 1)
+      {
+        max_speed = 100;
+        min_speed = 100;
+        maxthrot = 100;
+        minthrot = 100;
+        event_armed = 1;
+        delay(2000);
+      }
+    }
+    else
+    {
+      max_speed = 254;
+      min_speed = 150;
+      maxthrot = 254;
+      minthrot = 150;
+    }
+    
     int PIDroll_val= (int)PIDroll.Compute((float)kalAngleY);
     int PIDpitch_val= (int)PIDpitch.Compute((float)kalAngleX);
     int PIDyaw_val= (int)PIDyaw.Compute((float)kalAngleZ);
@@ -321,6 +355,15 @@ void loop()
     
     Serial.print("Motor 11: ");
     Serial.print(int(round(motor[1])));
+    Serial.print("|");
+    Serial.print(int(event1));
+    Serial.print("|");
+    Serial.print(int(event2));
+    Serial.print("|");
+    Serial.print(int(event3));
+    Serial.print("|");
+    Serial.print(int(event_armed));
+
     Serial.print('\n');
     analogWrite(8 , int(round(motor[0])));
     analogWrite(9 , int(round(motor[2])));
