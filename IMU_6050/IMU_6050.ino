@@ -6,21 +6,21 @@
 #include "IMU_6050.h"
 
 // Global definitions
-#define ROLL_PID_KP    0.0000250
-#define ROLL_PID_KI    0.000250
-#define ROLL_PID_KD    0.250
+#define ROLL_PID_KP    0.0007
+#define ROLL_PID_KI    0.000007
+#define ROLL_PID_KD    0.07
 #define ROLL_PID_MIN  -52.0
 #define ROLL_PID_MAX   52.0
 
-#define PITCH_PID_KP   0.0000250
-#define PITCH_PID_KI   0.000250
-#define PITCH_PID_KD   0.250
+#define PITCH_PID_KP   0.0007
+#define PITCH_PID_KI   0.000007
+#define PITCH_PID_KD   0.07
 #define PITCH_PID_MIN -52.0
 #define PITCH_PID_MAX  52.0
 
-#define YAW_PID_KP     0 //0.680
-#define YAW_PID_KI     0
-#define YAW_PID_KD     0
+#define YAW_PID_KP     0.0007
+#define YAW_PID_KI     0000007
+#define YAW_PID_KD     0.07
 #define YAW_PID_MIN   -52.0
 #define YAW_PID_MAX    52.0
 
@@ -238,7 +238,7 @@ void loop()
   
   // Apply the complementary filter to figure out the change in angle - choice of alpha is
   // estimated now.  Alpha depends on the sampling rate...
-  float alpha = 0.96;
+  float alpha = 0.94; //change was 0.96
   float angle_x = alpha*gyro_angle_x + (1.0 - alpha)*accel_angle_x;
   float angle_y = alpha*gyro_angle_y + (1.0 - alpha)*accel_angle_y;
   float angle_z = gyro_angle_z;  //Accelerometer doesn't give z-angle
@@ -252,7 +252,8 @@ void loop()
   
   // Update the saved data with the latest values
   set_last_read_angle_data(t_now, angle_x, angle_y, angle_z, unfiltered_gyro_angle_x, unfiltered_gyro_angle_y, unfiltered_gyro_angle_z, kalAngleX, kalAngleY, kalAngleZ);
-    
+  
+  // Outdated serial commands...  
   if(Serial.available() > 0)
   {
     incomingByte = Serial.read();
@@ -291,9 +292,11 @@ void loop()
   {
     Serial.print(millis());
     Serial.print('\n');
+    digitalWrite(ledPin, LOW);
   }
   else
   {
+    digitalWrite(ledPin, HIGH);
     if(event_armed == 0)
     {
       if(RCread(rcpin3,chan3min,chan3max) < 5 || event1 == 1)
@@ -312,6 +315,10 @@ void loop()
         maxthrot = 100;
         minthrot = 100;
         event_armed = 1;
+        analogWrite(8 , 100);
+        analogWrite(9 , 100);
+        analogWrite(10, 100);  
+        analogWrite(11, 100);
         delay(2000);
       }
     }
@@ -353,18 +360,28 @@ void loop()
       }
     }
     
-    Serial.print("Motor 11: ");
-    Serial.print(int(round(motor[1])));
-    Serial.print("|");
-    Serial.print(int(event1));
-    Serial.print("|");
-    Serial.print(int(event2));
-    Serial.print("|");
-    Serial.print(int(event3));
-    Serial.print("|");
-    Serial.print(int(event_armed));
-
-    Serial.print('\n');
+//    Serial.print("Motor 11: ");
+//    Serial.print(int(round(motor[1])));
+//    Serial.print("|");
+//    Serial.print(int(event1));
+//    Serial.print("|");
+//    Serial.print(int(event2));
+//    Serial.print("|");
+//    Serial.print(int(event3));
+//    Serial.print("|");
+//    Serial.print(int(event_armed));
+//    Serial.print("Motor 9: ");
+//    Serial.print(int(round(motor[2])));
+//    Serial.print("|");
+//    Serial.print(int(event1));
+//    Serial.print("|");
+//    Serial.print(int(event2));
+//    Serial.print("|");
+//    Serial.print(int(event3));
+//    Serial.print("|");
+//    Serial.print(int(event_armed));
+//
+//    Serial.print('\n');
     analogWrite(8 , int(round(motor[0])));
     analogWrite(9 , int(round(motor[2])));
     analogWrite(10, int(round(motor[3])));
